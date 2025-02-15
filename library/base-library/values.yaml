@@ -1,0 +1,5 @@
+---
+## It is required by CI/CD tools and processes.
+## @skip exampleValue
+##
+exampleValue: base-library

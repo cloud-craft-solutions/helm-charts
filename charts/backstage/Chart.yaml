@@ -1,0 +1,17 @@
+---
+apiVersion: v2
+name: backstage
+description: A Helm chart for Backstage, a developer portal and toolchain management platform.
+type: application
+version: 0.0.1
+appVersion: 0.1.0
+kubeVersion: ">=1.22.0-0"
+keywords:
+  - backstage
+dependencies:
+  - name: base-library
+    repository: file://../../library/base-library
+    version: 1.x.x
+maintainers:
+  - name: cloud-craft-solutions
+    email: cloud-craft-solutions@proton.me

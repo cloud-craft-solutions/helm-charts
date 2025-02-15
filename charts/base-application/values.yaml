@@ -1,0 +1,329 @@
+---
+# Default values for helm-charts.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# ================================================
+# @section Common Parameters
+# ================================================
+
+## @param kubeVersion Override Kubernetes version
+##
+kubeVersion: ""
+## @param fullnameOverride String to fully override metadata.name
+##
+fullnameOverride: ""
+## @param namespaceOverride String to fully override metadata.namespace
+##
+namespaceOverride: ""
+## @param extraObjects Array of extra Kubernetes objects to deploy
+##
+extraObjects: []
+
+# ================================================
+# @section Application Configuration
+# ================================================
+
+## @param replicaCount Number of application replicas
+##
+replicaCount: 1
+## @param revisionHistoryLimit Number of old revisions to retain
+##
+revisionHistoryLimit: 10
+## @param updateStrategy.type Deployment update strategy (RollingUpdate/Recreate)
+## @param updateStrategy.rollingUpdate.maxSurge Maximum surge during updates
+## @param updateStrategy.rollingUpdate.maxUnavailable Maximum unavailable pods
+##
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+## @param autoscaling.enabled Enable Horizontal Pod Autoscaler
+## @param autoscaling.minReplicas Minimum replicas under HPA
+## @param autoscaling.maxReplicas Maximum replicas under HPA
+## @param autoscaling.targetCPU Target CPU utilization percentage
+## @param autoscaling.targetMemory Target memory utilization percentage
+## @param autoscaling.behavior Custom HPA scaling behavior
+##
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPU: 70
+  targetMemory: 70
+  behavior: {}
+## @param pdb.enabled Enable Pod Disruption Budget
+## @param pdb.minAvailable Minimum available pods during disruptions
+## @param pdb.maxUnavailable Maximum unavailable pods during disruptions
+##
+pdb:
+  enabled: false
+  minAvailable: ""
+  maxUnavailable: ""
+
+# ================================================
+# @section Image Configuration
+# ================================================
+
+## @param image.registry Container image registry
+## @param image.repository Container image repository
+## @skip image.tag Image tag (immutable tags recommended)
+## @param image.digest Image digest (overrides tag if set)
+## @param image.pullPolicy Image pull policy
+## @param image.pullSecrets Image pull secrets
+##
+image:
+  registry: docker.io
+  repository: nginx
+  tag: latest
+  digest: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# ================================================
+# @section Service Account Configuration
+# ================================================
+
+## @param serviceAccount.enabled Enable Service Account creation
+## @param serviceAccount.name Service Account name
+## @param serviceAccount.annotations Service Account annotations
+## @param serviceAccount.automountServiceAccountToken Auto-mount SA token in pods
+##
+serviceAccount:
+  enabled: true
+  name: ""
+  annotations: {}
+  automountServiceAccountToken: false
+
+# ================================================
+# @section Pod Configuration
+# ================================================
+
+## @param automountServiceAccountToken Auto-mount Service Account token in pods
+##
+automountServiceAccountToken: false
+## @param terminationGracePeriodSeconds Grace period for pod termination
+##
+terminationGracePeriodSeconds: ""
+## @param extraVolumes Additional volumes for the pod
+##
+extraVolumes: []
+## @param initContainers Init containers for the pod
+##
+initContainers: []
+
+# ================================================
+# @section Container Configuration
+# ================================================
+
+## @param command Override default container command
+##
+command: []
+## @param args Override default container args
+##
+args: []
+## @param containerPorts.http HTTP container port
+## @param containerPorts.https HTTPS container port
+##
+containerPorts:
+  http: 8080
+  https: 8443
+## @param extraContainerPorts Additional container ports
+##
+extraContainerPorts: []
+## @param extraEnvVars Additional environment variables
+##
+extraEnvVars: {}
+## @param extraEnvFrom Environment variables from ConfigMaps/Secrets
+##
+extraEnvFrom: {}
+## @param resourcesPreset Predefined resource presets (none, nano, micro, etc.)
+##
+resourcesPreset: "nano"
+## @param resources Container resource requests/limits
+##
+resources: {}
+## @param lifecycle Container lifecycle hooks
+##
+lifecycle: {}
+## @param startupProbe.enabled Enable startup probe
+## @param startupProbe.path HTTP path for startup probe
+## @param startupProbe.port Port for startup probe
+## @param startupProbe.* Additional probe parameters
+##
+startupProbe:
+  enabled: false
+  path: /health
+  port: http
+  initialDelaySeconds: 60
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## @param livenessProbe.enabled Enable liveness probe
+## @param livenessProbe.* Liveness probe parameters
+##
+livenessProbe:
+  enabled: false
+  port: http
+  initialDelaySeconds: 60
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## @param readinessProbe.enabled Enable readiness probe
+## @param readinessProbe.* Readiness probe parameters
+##
+readinessProbe:
+  enabled: false
+  path: /health
+  port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## @param extraVolumeMounts Additional volume mounts for the container
+##
+extraVolumeMounts: []
+
+# ================================================
+# @section Security Contexts
+# ================================================
+
+## @param podSecurityContext.enabled Enable pod security context
+## @param podSecurityContext.* Pod security context parameters
+##
+podSecurityContext:
+  enabled: false
+  fsGroupChangePolicy: Always
+  supplementalGroups: []
+  fsGroup: 1001
+  sysctls: []
+## @param containerSecurityContext.enabled Enable container security context
+## @param containerSecurityContext.* Container security context parameters
+##
+containerSecurityContext:
+  enabled: false
+  seLinuxOptions: {}
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
+
+# ================================================
+# @section Networking
+# ================================================
+
+## @param service.enabled Enable Service
+## @param service.type Service type
+## @param service.ports HTTP/HTTPS ports
+## @param service.annotations Service annotations
+##
+service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    http: 80
+    https: 443
+  targetPort:
+    http: http
+    https: https
+  extraPorts: []
+  sessionAffinity: None
+  sessionAffinityConfig: {}
+  annotations: {}
+## @param ingress.enabled Enable Ingress
+## @param ingress.ingressClassName Ingress class name
+## @param ingress.annotations Ingress annotations
+## @param ingress.hosts Ingress hosts configuration
+##
+ingress:
+  enabled: false
+  ingressClassName: "nginx"
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+## @param networkPolicy.enabled Enable Network Policy
+## @param networkPolicy.* Network Policy parameters
+##
+networkPolicy:
+  enabled: false
+  allowExternal: true
+  allowExternalEgress: true
+  extraIngress: []
+  extraEgress: []
+  ingressNSMatchLabels: {}
+  ingressNSPodMatchLabels: {}
+
+# ================================================
+# @section Storage
+# ================================================
+
+## @param persistence.enabled Enable Persistent Volume
+## @param persistence.storageClass Storage class name
+## @param persistence.size Storage size
+##
+persistence:
+  enabled: false
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  dataSource: {}
+  existingClaim: false
+  annotations: {}
+
+# ================================================
+# @section Secrets Management
+# ================================================
+
+## @param secretProviderClass.enabled Enable SecretProviderClass
+## @param secretProviderClass.* Secret provider configuration
+##
+secretProviderClass:
+  enabled: false
+  provider: "aws"
+  objects: []
+  secretObjects: []
+## @param externalSecret.enabled Enable External Secrets
+## @param externalSecret.* External Secret configuration
+##
+externalSecret:
+  enabled: false
+  annotations: {}
+  secretStore:
+    name: tenant-vault-secret-store
+    kind: SecretStore
+  refreshInterval: "1m"
+  files: {}
+
+# ================================================
+# @section Affinity and Topology
+# ================================================
+
+## @param affinity Pod affinity rules
+##
+affinity: {}
+## @param nodeSelector Node labels for pod assignment
+##
+nodeSelector: {}
+## @param tolerations Tolerations for pod assignment
+##
+tolerations: []
+## @param priorityClassName Priority class name
+##
+priorityClassName: ""
+## @param topologySpreadConstraints Topology spread constraints
+##
+topologySpreadConstraints: []

@@ -1,0 +1,595 @@
+---
+# Default values for helm-charts.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# ================================================
+# @section Common Params
+# ================================================
+
+## @param kubeVersion Override Kubernetes version
+##
+kubeVersion: "1.29"
+## @param fullnameOverride string to fully override metadata.name
+##
+fullnameOverride: "teste"
+## @param namespaceOverride string to fully override metadata.namespace
+##
+namespaceOverride: "teste"
+## @param extraObjects Array of extra objects to deploy with the release
+##
+extraObjects:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: secret-basic-auth
+    type: kubernetes.io/basic-auth
+    stringData:
+      username: admin
+
+# =================================================================================================
+
+## @section Application Params
+##
+
+## @param image.registry
+## @param image.repository
+## @skip image.tag image tag (immutable tags are recommended)
+## @param image.digest image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+## @param image.pullPolicy image pull policy
+## @param image.pullSecrets image pull secrets
+## ref: https://kubernetes.io/docs/concepts/containers/images/
+##
+image:
+  registry: docker.io
+  repository: nginx
+  tag: latest
+  digest: ""
+  ## Specify a imagePullPolicy
+  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
+  ##
+  pullPolicy: IfNotPresent
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ## e.g:
+  ## pullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  pullSecrets:
+    - myRegistryKeySecretName
+## @param replicaCount Number of replicas to deploy
+##
+replicaCount: 1
+## @param revisionHistoryLimit The number of old history to retain to allow rollback
+##
+revisionHistoryLimit: 10
+## @param updateStrategy.type Update strategy for the StatefulSet
+## @param updateStrategy.rollingUpdate.maxSurge Max surge for the StatefulSet
+## @param updateStrategy.rollingUpdate.maxUnavailable Max unavailable for the StatefulSet
+## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+##
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+## @param autoscaling.enabled Enable autoscaling for the deployment
+## @param autoscaling.minReplicas Minimum number of replicas
+## @param autoscaling.maxReplicas Maximum number of replicas
+## @param autoscaling.targetCPU Target CPU utilization percentage
+## @param autoscaling.targetMemory Target memory utilization percentage
+## @param autoscaling.behavior HPA configurable scaling behavior see [ref](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#configurable-scaling-behavior)
+## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+##
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPU: 80
+  targetMemory: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max
+## @param pdb.enabled Enable a Pod Disruption Budget creation
+## @param pdb.minAvailable Minimum number/percentage of pods that should remain scheduled
+## @param pdb.maxUnavailable Maximum number/percentage of pods that may be made unavailable
+## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+##
+pdb:
+  enabled: true
+  minAvailable: ""
+  maxUnavailable: "1"
+## @param serviceAccount.enabled Enable creation of ServiceAccount for pod
+## @param serviceAccount.name The name of the ServiceAccount to create. If not set and create is true, a name is generated using the common.names.fullname template
+## @param serviceAccount.annotations Additional custom annotations for the ServiceAccount
+## @param serviceAccount.automountServiceAccountToken Allows auto mount of ServiceAccountToken on the serviceAccount created. Can be set to false if pods using this serviceAccount do not need to use K8S API
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+##
+serviceAccount:
+  enabled: true
+  name: "svc-common"
+  annotations:
+    owner: "infraestrutura"
+  automountServiceAccountToken: true
+
+# =================================================================================================
+
+## @section Pod Params
+##
+
+## @param automountServiceAccountToken Mount Service Account token in pod
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+##
+automountServiceAccountToken: false
+## @param terminationGracePeriodSeconds In seconds, time the given to the pod needs to terminate gracefully
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
+##
+terminationGracePeriodSeconds: "60"
+## @param command [array] Default container command (useful when using custom images)
+##
+command:
+  - /bin/bash
+## @param args [array] Default container args (useful when using custom images)
+##
+args:
+  - -ec
+  - |
+    #!/bin/bash
+    while true; do sleep 30; done;
+## @param containerPorts.http Sets http port inside container
+## @param containerPorts.https Sets https port inside container
+##
+containerPorts:
+  http: 8080
+  https: 8443
+## @param extraContainerPorts Array of additional container ports to expose in the container
+## e.g:
+## extraContainerPorts:
+##   - name: grpc
+##     containerPort: 4317
+##
+extraContainerPorts:
+  - name: extra
+    containerPort: 8072
+## @param extraEnvVars Extra environment variables to be set on containers
+## e.g:
+## extraEnvVars:
+##   FOO: BAR
+##
+extraEnvVars:
+  TZ: "America/Sao_Paulo"
+## @param extraEnvFrom Mount environment variables from ConfigMap or Secret to the pod
+## e.g:
+## production-cm:
+##   type: configmap
+##   name: my-configmap
+## logging-config:
+##   type: configmap
+##   nameSuffix: your-configmap
+## postgres-config:
+##   type: secret
+##
+extraEnvFrom: {}
+## We usually recommend not to specify default resources and to leave this as a conscious
+## choice for the user. This also increases chances charts run on environments with little
+## resources, such as Minikube. If you do want to specify resources, uncomment the following
+## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+## @param resourcesPreset Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+## More information: ../common/templates/_resources.tpl
+resourcesPreset: "nano"
+## @param resources.requests [object] The requested resources for the init container
+## @param resources.limits [object] The resources limits for the init container
+## e.g:
+## resources:
+##   requests:
+##     cpu: 50m
+##     memory: 512Mi
+##   limits:
+##     cpu: 100m
+##     memory: 1Gi
+##
+resources: {}
+## @param lifecycle PostStart and PreStop lifecycle hooks
+## e.g:
+## lifecycle:
+##   preStop:
+##     exec:
+##       command: ["/bin/bash", "-c", "sleep 20"]
+##
+lifecycle: {}
+## @param startupProbe.enabled Enable startupProbe
+## @param startupProbe.path Path to access on the HTTP server
+## @param startupProbe.port Port for startupProbe
+## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+## @param startupProbe.periodSeconds Period seconds for startupProbe
+## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
+## @param startupProbe.failureThreshold Failure threshold for startupProbe
+## @param startupProbe.successThreshold Success threshold for startupProbe
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+##
+startupProbe:
+  enabled: true
+  path: /health
+  port: http
+  initialDelaySeconds: 60
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## @param livenessProbe.enabled Enable liveness probe
+## @param livenessProbe.port Port for livenessProbe
+## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+## @param livenessProbe.successThreshold Success threshold for livenessProbe
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+##
+livenessProbe:
+  enabled: true
+  port: http
+  initialDelaySeconds: 60
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## @param readinessProbe.enabled Enable readiness probe
+## @param readinessProbe.path Path to access on the HTTP server
+## @param readinessProbe.port Port for readinessProbe
+## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+## @param readinessProbe.successThreshold Success threshold for readinessProbe
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+##
+readinessProbe:
+  enabled: true
+  path: /health
+  port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## @param extraVolumes Array to add extra volumes
+## ref: https://kubernetes.io/docs/concepts/storage/volumes/
+## e.g:
+## extraVolumes:
+##   - name: volume-name
+##     persistentVolumeClaim:
+##       claimName: volume-claim-name
+##
+extraVolumes:
+  - name: volume-name
+    persistentVolumeClaim:
+      claimName: volume-claim-name
+  - name: secrets-store-inline
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: '{{ template "common.names.fullname" . }}'
+## @param extraVolumeMounts Array to add extra mount
+## ref: https://kubernetes.io/docs/concepts/storage/volumes/
+## e.g:
+## extraVolumeMounts:
+##   - mountPath: /cache
+##     name: volume-name
+##
+extraVolumeMounts:
+  - mountPath: /cache
+    name: volume-name
+  - name: secrets-store-inline
+    mountPath: /dist/env
+    readOnly: true
+## @param initContainers Array of init containers to add to the pod
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+## e.g:
+## initContainers:
+##   - name: init-container-name
+##     image: init-container-image
+##     command: ["init-container-command"]
+##     imagePullPolicy: Always
+##     env:
+##       - name: some-name
+##         value: some-value
+##     envFrom:
+##       - secretRef:
+##         name: some-secret-ref
+##
+initContainers:
+  - name: init-container-name
+    image: init-container-image
+    command: ["init-container-command"]
+    imagePullPolicy: Always
+    env:
+      - name: some-name
+        value: some-value
+
+# =================================================================================================
+
+## @section Security Params
+##
+
+## @param podSecurityContext.enabled Enable security context for the pod
+## @param podSecurityContext.fsGroupChangePolicy fsGroupChangePolicy for the pod
+## @param podSecurityContext.supplementalGroups supplementalGroups for the pod
+## @param podSecurityContext.fsGroup fsGroup for the pod
+## @param podSecurityContext.sysctls sysctls for the pod
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+##
+podSecurityContext:
+  enabled: true
+  fsGroupChangePolicy: Always
+  supplementalGroups: []
+  fsGroup: 1001
+  ## sysctl settings
+  ## e.g:
+  ## sysctls:
+  ## - name: net.core.somaxconn
+  ##   value: "10000"
+  ##
+  sysctls: []
+## @param containerSecurityContext.enabled Enable security context for the container
+## @param containerSecurityContext.seLinuxOptions seLinuxOptions for the container
+## @param containerSecurityContext.runAsUser runAsUser for the container
+## @param containerSecurityContext.runAsGroup runAsGroup for the container
+## @param containerSecurityContext.runAsNonRoot runAsNonRoot for the container
+## @param containerSecurityContext.privileged privileged for the container
+## @param containerSecurityContext.readOnlyRootFilesystem readOnlyRootFilesystem for the container
+## @param containerSecurityContext.allowPrivilegeEscalation allowPrivilegeEscalation for the container
+## @param containerSecurityContext.capabilities capabilities for the container
+## @param containerSecurityContext.seccompProfile seccompProfile for the container
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+##
+containerSecurityContext:
+  enabled: true
+  seLinuxOptions: {}
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: RuntimeDefault
+
+# =================================================================================================
+
+## @section Affinity and Topology Params
+##
+
+## @param affinity Affinity for pod assignment
+## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+affinity: {}
+## @param nodeSelector Node labels for pod assignment. Evaluated as a template.
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+##
+nodeSelector: {}
+## @param tolerations Tolerations for pod assignment. Evaluated as a template.
+## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+## @param priorityClassName Priority class name
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+##
+priorityClassName: ""
+## @param topologySpreadConstraints Topology Spread Constraints for pod assignment. Evaluated as a template.
+## https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+##
+topologySpreadConstraints: []
+
+# =================================================================================================
+
+## @section Network Params
+##
+
+## @param service.enabled Enable Service
+## @param service.type Service type
+## @param service.ports.http Service HTTP port
+## @param service.ports.https Service HTTPS port
+## @param service.targetPort [object] Target port reference value for the Loadbalancer service types can be specified explicitly.
+## @param service.clusterIP service Cluster IP
+## @param service.extraPorts Extra ports to expose (normally used with the `sidecar` value)
+## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP". If "ClientIP", consecutive client requests will be directed to the same Pod
+## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+## ref: https://kubernetes.io/docs/concepts/services-networking/service/
+##
+service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    http: 80
+    https: 443
+  targetPort:
+    http: http
+    https: https
+  extraPorts:
+    - name: extra
+      port: 8072
+      targetPort: 8072
+  sessionAffinity: None
+  sessionAffinityConfig: {}
+  annotations: {}
+## @param ingress.enabled Enable Ingress
+## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+## @param ingress.hosts List of ingress hosts
+##
+ingress:
+  enabled: true
+  ingressClassName: "nginx"
+  ## For a full list of possible ingress annotations, please see
+  ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
+  ##
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          # @default -- `ImplementationSpecific`
+          pathType: ImplementationSpecific
+          # @default -- `{{ template "common.names.fullname" . }}`
+          serviceName: ""
+          # @default -- `http`
+          servicePort: http
+## @param networkPolicy.enabled Specifies whether a NetworkPolicy should be created
+## @param networkPolicy.allowExternal Don't require server label for connections
+## @param networkPolicy.allowExternalEgress Allow the pod to access any range of port and all destinations
+## @param networkPolicy.extraIngress [array] Add extra ingress rules to the NetworkPolicy
+## @param networkPolicy.extraEgress [array] Add extra ingress rules to the NetworkPolicy (ignored if allowExternalEgress=true)
+## @param networkPolicy.ingressNSMatchLabels [object] Labels to match to allow traffic from other namespaces
+## @param networkPolicy.ingressNSPodMatchLabels [object] Pod labels to match to allow traffic from other namespaces
+## Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+##
+networkPolicy:
+  enabled: true
+  ## The Policy model to apply. When set to false, only pods with the correct
+  ## server label will have network access to the ports server is listening
+  ## on. When true, server will accept connections from any source
+  ## (with the correct destination port).
+  ##
+  allowExternal: true
+  allowExternalEgress: true
+  extraIngress: []
+  ## e.g:
+  ## extraIngress:
+  ##   - ports:
+  ##       - port: 1234
+  ##     from:
+  ##       - podSelector:
+  ##           - matchLabels:
+  ##               - role: frontend
+  ##       - podSelector:
+  ##           - matchExpressions:
+  ##               - key: role
+  ##                 operator: In
+  ##                 values:
+  ##                   - frontend
+  extraEgress: []
+  ## e.g:
+  ## extraEgress:
+  ##   - ports:
+  ##       - port: 1234
+  ##     to:
+  ##       - podSelector:
+  ##           - matchLabels:
+  ##               - role: frontend
+  ##       - podSelector:
+  ##           - matchExpressions:
+  ##               - key: role
+  ##                 operator: In
+  ##                 values:
+  ##                   - frontend
+  ##
+  ingressNSMatchLabels: {}
+  ingressNSPodMatchLabels: {}
+
+# =================================================================================================
+
+## @section Persistence Params
+##
+
+## @param persistence.enabled Enable persistence using Persistent Volume Claims
+## @param persistence.storageClass Persistent Volume storage class
+## @param persistence.accessModes [array] Persistent Volume access modes
+## @param persistence.size Persistent Volume size
+## @param persistence.dataSource Custom PVC data source
+## @param persistence.existingClaim Boolean flag to enable the use of an existing PVC
+## @param persistence.annotations Persistent Volume Claim annotations
+## ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+##
+persistence:
+  enabled: true
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner
+  ##
+  storageClass: "ebs-gp3"
+  accessModes:
+    - ReadWriteOnce
+  size: 64Gi
+  dataSource:
+    name: existing-pvc-name
+    kind: PersistentVolumeClaim
+  existingClaim: false
+  annotations:
+    owner: "infraestrutura"
+
+# =================================================================================================
+
+## @section Secrets Addons Parameters
+##
+
+## @param secretProviderClass.enabled Enable secret provider class
+## @param secretProviderClass.name Name of the secret provider class
+## @param secretProviderClass.provider Provider to use
+## @param secretProviderClass.objects Array of objects to be mounted
+## @param secretProviderClass.secretObjects Array of secret objects to be mounted
+## ref: https://docs.aws.amazon.com/pt_br/secretsmanager/latest/userguide/integrating_csi_driver_SecretProviderClass.html
+##
+secretProviderClass:
+  enabled: true
+  provider: "aws"
+  objects: |
+    - objectName: "secrets-manager-secret"
+      objectType: "secretsmanager"
+      objectAlias: "secret.json"
+  secretObjects:
+    []
+    # - data:
+    #   - key: MONGO_HOST
+    #     objectName: host
+    #   secretName: secret-mongo-host
+    #   type: Opaque
+
+## @param externalSecret.enabled Enable external secret
+## @param externalSecret.annotations Annotations for external secret
+## @param externalSecret.secretStore.name Name of the secret store
+## @param externalSecret.secretStore.kind Kind of the secret store
+## @param externalSecret.refreshInterval Refresh interval for the external secret
+## @param externalSecret.files Array of files to be mounted
+##
+externalSecret:
+  enabled: true
+  annotations:
+  secretStore:
+    name: tenant-vault-secret-store
+    kind: SecretStore
+  refreshInterval: "1m"
+  files:
+    mongodb:
+      data:
+        currentPassword:
+          remoteRef:
+            key: /tools/tool/admin
+            property: currentPassword
+        password:
+          remoteRef:
+            key: /tools/tool/admin
+            property: password

@@ -1,0 +1,5 @@
+# yamllint disable-file
+{{- range .Values.extraObjects }}
+---
+{{ include "common.tplvalues.render" (dict "value" . "context" $) }}
+{{- end }}

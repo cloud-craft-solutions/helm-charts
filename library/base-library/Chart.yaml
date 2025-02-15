@@ -1,0 +1,12 @@
+---
+apiVersion: v2
+name: common-library
+description: A Library Helm Chart for grouping common logic between your Helm Charts. This chart is not deployable by itself.
+type: library
+version: 1.0.0
+keywords:
+  - library
+  - common
+maintainers:
+  - name: cloud-craft-solutions
+    email: cloud-craft-solutions@proton.me

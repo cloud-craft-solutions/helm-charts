@@ -1,0 +1,67 @@
+---
+suite: test persistentVolumeClaim
+templates:
+  - pvc.yaml
+tests:
+  - it: does not yield PVC if persistence is disabled
+    set:
+      persistence.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: does not yield PVC if there's an existing claim
+    set:
+      persistence:
+        enabled: true
+        existingClaim: true
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: yields a PVC when persistence is enabled and there's no existing claim
+    set:
+      persistence:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PersistentVolumeClaim
+  - it: includes annotations when defined in values
+    set:
+      persistence:
+        enabled: true
+        annotations:
+          foo: bar
+          test: ing
+    asserts:
+      - equal:
+          path: metadata.annotations
+          value:
+            foo: bar
+            test: ing
+  - it: storage class name is unset if not in values
+    set:
+      persistence:
+        enabled: true
+        storageClass: null
+    asserts:
+      - isNull:
+          path: spec.storageClassName
+  - it: storage class name is an empty string if set to '-'
+    set:
+      persistence:
+        enabled: true
+        storageClass: "-"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: ""
+  - it: storage class name is used if present and not '-'
+    set:
+      persistence:
+        enabled: true
+        storageClass: example-class-that-should-be-used
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: example-class-that-should-be-used

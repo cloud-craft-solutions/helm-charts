@@ -1,0 +1,37 @@
+# yamllint disable-file
+{{- if .Values.ingress.enabled -}}
+{{- $applicationName := include "common.names.fullname" . -}}
+---
+apiVersion: {{ include "common.capabilities.ingress.apiVersion" . }}
+kind: Ingress
+metadata:
+  name: {{ $applicationName }}
+  namespace: {{ include "common.names.namespace" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+  {{- if .Values.ingress.annotations }}
+  annotations: {{ toYaml .Values.ingress.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.ingress.ingressClassName | quote }}
+  {{- end}}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ tpl .host $ }}
+      http:
+        paths:
+        {{- if .paths }}
+        {{- range .paths }}
+        - path: {{ .path }}
+          pathType: {{ default "ImplementationSpecific" (.pathType) }}
+          backend:
+            service:
+              name: {{ default $applicationName (.serviceName) }}
+              port:
+                name: {{ default "http" (.servicePort) }}
+        {{- end }}
+        {{- else }}
+        {{ fail "Please, specify paths for ingress host - check the values.yaml file" }}
+        {{- end }}
+    {{- end -}}
+{{- end -}}

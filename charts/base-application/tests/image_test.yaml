@@ -1,0 +1,52 @@
+---
+suite: test image
+templates:
+  - deployment.yaml
+tests:
+  - it: test default image parameters
+    template: deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "docker.io/nginx:latest"
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+      - notExists:
+          path: spec.template.spec.containers[0].command
+      - notExists:
+          path: spec.template.spec.containers[0].args
+  - it: test image parameters added to deployment
+    template: deployment.yaml
+    set:
+      image:
+        repository: sysbee/kubeci
+        tag: latest
+        pullPolicy: Always
+      command:
+        - echo "test"
+      args:
+        - -n
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "docker.io/sysbee/kubeci:latest"
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+      - lengthEqual:
+          path: spec.template.spec.containers[0].command
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].command
+          content: echo "test"
+      - lengthEqual:
+          path: spec.template.spec.containers[0].args
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: -n

@@ -1,0 +1,6 @@
+dependencies:
+- name: base-library
+  repository: file://../../library/base-library
+  version: 1.0.0
+digest: sha256:31a10a6c95b176ffdeb4c88fe747c6e86cca1008cc9edacaf8d42dc6bfd840f3
+generated: "2025-02-15T17:33:02.077553-03:00"

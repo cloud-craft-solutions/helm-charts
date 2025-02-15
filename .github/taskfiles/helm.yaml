@@ -1,0 +1,74 @@
+---
+version: "3"
+
+vars:
+  HELM_CHARTS_DIR: "{{.ROOT_DIR}}/charts"
+  HELM_LIBS_DIR: "{{.ROOT_DIR}}/library"
+
+tasks:
+  docs:
+    desc: Generate documentation for all Helm charts
+    preconditions:
+      - sh: which helm-docs
+        msg: helm-docs {{.PATH_ERROR}}
+    cmds:
+      - |
+        for chart in $(find {{.CHARTS_DIR}} {{.DOCS_DIR}} -type f -name "Chart.yaml" -exec dirname {} \;); do
+          echo "Generating docs for $chart"
+          helm-docs --template-files={{.ROOT_DIR}}/.github/config/.helmdocs.gotmpl -c $chart
+        done
+
+  schema:
+    desc: Generate values schema for all Helm charts
+    cmds:
+      - |
+        for chart in $(find {{.CHARTS_DIR}} {{.DOCS_DIR}} -type f -name "Chart.yaml" -exec dirname {} \;); do
+          echo "Generating values schema for $chart"
+          helm schema -indent 2 \
+            -input $chart/values.yaml \
+            -output $chart/values.schema.json
+        done
+
+  lint:
+    desc: Run lint for all Helm charts
+    cmds:
+      - |
+        for chart in $(find {{.CHARTS_DIR}} -type f -name "Chart.yaml" -exec dirname {} \;); do
+          if [ -f "$chart/Chart.yaml" ]; then
+            echo "Run chart-testing lint for $chart"
+            ct lint --validate-yaml \
+              --validate-chart-schema \
+              --validate-maintainers \
+              --chart-dirs $(dirname $chart) \
+              --charts $chart
+
+            if [ -f "$chart/ci/values-test.yaml" ]; then
+              echo "Run helm lint for $chart"
+              helm dep update
+              helm lint $chart -f $chart/ci/values-test.yaml
+            else
+              echo "Run helm lint for $chart with default values"
+              helm dep update
+              helm lint $chart
+            fi
+          fi
+        done
+
+  unit-test:
+    desc: Run unit tests for all Helm charts
+    cmds:
+      - |
+        for chart in $(find {{.CHARTS_DIR}} -type f -name "Chart.yaml" -exec dirname {} \;); do
+          if [ -f "$chart/Chart.yaml" ]; then
+            echo "Updating dependencies for $chart"
+            helm dependency update $chart
+          fi
+        done
+
+  all:
+    desc: Run all Helm tasks
+    cmds:
+      - task: docs
+      - task: schema
+      - task: lint
+      - task: unit-test

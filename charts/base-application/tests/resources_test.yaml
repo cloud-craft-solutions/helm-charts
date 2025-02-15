@@ -1,0 +1,32 @@
+---
+suite: test resources
+templates:
+  - deployment.yaml
+tests:
+  - it: test resources added to deployment
+    template: deployment.yaml
+    set:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 150m
+          memory: 256Mi
+    asserts:
+      - hasDocuments:
+          count: 1
+      - exists:
+          path: spec.template.spec.containers[0].resources
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 128Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 150m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi

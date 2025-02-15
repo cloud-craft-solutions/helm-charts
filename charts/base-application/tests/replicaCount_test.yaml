@@ -1,0 +1,19 @@
+---
+suite: test replicaCount
+templates:
+  - deployment.yaml
+tests:
+  - it: test default replicaCount for deployment
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+  - it: test custom replicaCount for deployment
+    template: deployment.yaml
+    set:
+      replicaCount: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3

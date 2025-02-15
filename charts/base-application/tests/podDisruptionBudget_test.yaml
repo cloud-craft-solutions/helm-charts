@@ -1,0 +1,10 @@
+---
+suite: test podDisruptionBudget
+templates:
+  - pdb.yaml
+tests:
+  - it: test if podDisruptionBudget is disabled by default
+    template: pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

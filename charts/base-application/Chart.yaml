@@ -1,0 +1,19 @@
+---
+apiVersion: v2
+name: base-application
+description: Basic Helm chart for Kubernetes (as agnostic as possible) used to deploy applications in Kubernetes.
+type: application
+version: 1.0.0
+appVersion: 0.1.0
+kubeVersion: ">=1.22.0-0"
+keywords:
+  - base
+  - application
+  - base-application
+dependencies:
+  - name: base-library
+    repository: file://../../library/base-library
+    version: 1.x.x
+maintainers:
+  - name: cloud-craft-solutions
+    email: cloud-craft-solutions@proton.me

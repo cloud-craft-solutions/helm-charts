@@ -1,0 +1,162 @@
+# yamllint disable-file
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  {{- if .Values.updateStrategy }}
+  strategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "common.labels.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "common.labels.selector" . | nindent 8 }}
+    spec:
+      {{- if not (quote .Values.automountServiceAccountToken | empty) }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- end }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8  }}
+      {{- end }}
+      serviceAccountName: {{ template "application.serviceAccountName" . }}
+      {{- if .Values.affinity }}
+      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+        {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- end }}
+      {{- if .Values.initContainers }}
+      initContainers:
+        {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ template "common.names.fullname" . }}
+          image: {{ template "common.images.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.command }}
+          command:
+            {{- include "common.tplvalues.render" (dict "value" .Values.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.args }}
+          args:
+            {{- include "common.tplvalues.render" (dict "value" .Values.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.envFrom }}
+          envFrom:
+          {{- range $value := .Values.envFrom }}
+          {{- if (eq .type "configmap") }}
+          - configMapRef:
+            {{- if .name }}
+            name: {{ include "common.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+            {{- else if .nameSuffix }}
+            name: {{ template "common.names.fullname" $ }}-{{ include "common.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+            {{- else }}
+            name: {{ template "common.names.fullname" $ }}
+            {{- end }}
+          {{- end }}
+          {{- if (eq .type "secret") }}
+          - secretRef:
+            {{- if .name }}
+            name: {{ include "common.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+            {{- else if .nameSuffix }}
+            name: {{ template "common.names.fullname" $ }}-{{ include "common.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+            {{- else }}
+            name: {{ template "common.names.fullname" $ }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          env:
+          {{- range $name, $value := .Values.extraEnvVars }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+          {{ end }}
+          ports:
+            {{- if .Values.containerPorts.http }}
+            - name: http
+              containerPort: {{ .Values.containerPorts.http }}
+            {{- end }}
+            {{- if .Values.containerPorts.https }}
+            - name: https
+              containerPort: {{ .Values.containerPorts.https }}
+            {{- end }}
+            {{- if .Values.extraContainerPorts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.extraContainerPorts "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- else if ne .Values.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.startupProbe.enabled }}
+            httpGet:
+              path: {{ .Values.startupProbe.path }}
+              port: {{ .Values.startupProbe.port }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.startupProbe.successThreshold }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.readinessProbe.port }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default "5" }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds | default "3" }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds | default "10" }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold | default "3" }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold | default "1" }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.readinessProbe.port }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default "5" }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds | default "3" }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds | default "10" }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold | default "3" }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold | default "1" }}
+          {{- end }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext:
+            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.extraVolumeMounts }}
+              {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- if .Values.extraVolumes }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
