@@ -1,0 +1,360 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "additionalConfigMapMounts": {
+      "items": {
+        "required": []
+      },
+      "required": [],
+      "title": "additionalConfigMapMounts",
+      "type": "array"
+    },
+    "affinity": {
+      "additionalProperties": false,
+      "required": [],
+      "title": "affinity",
+      "type": "object"
+    },
+    "appConfig": {
+      "default": "organization:\n  name: Platformers Community\n\napp:\n  title: Platformers Community Backstage\n  baseUrl: ${BASE_URL}:7007\n\nbackend:\n  baseUrl: ${BASE_URL}:7007\n  listen: ':7007'\n  \n  database:\n    client: pg\n    connection:\n      host: ${POSTGRES_HOST}\n      port: ${POSTGRES_PORT}\n      user: ${POSTGRES_USER}\n      password: ${POSTGRES_PASSWORD}\n\nintegrations:\n  github:\n    - host: github.com\n      token: ${GITHUB_TOKEN}\nauth:\n  # see https://backstage.io/docs/auth/ to learn about auth providers\n  providers: {}\n\nscaffolder:\n\ntechdocs:\n  builder: 'local'\n  generator:\n    runIn: 'local'\n  publisher:\n    type: 'local'\n\nscorecards:\n  test: none\n\ncatalog:\n  locations:\n  - type: url\n    target: ${DEMO_CATALOG_LOCATION}\n    rules:\n    - allow: [Component, System, API, Resource, Location]\n  - type: url\n    target: ${CUSTOM_CATALOG_LOCATION}\n    rules:\n    - allow: [Component, System, API, Resource, Location]\n\nkubernetes:\n  serviceLocatorMethod:\n    type: 'multiTenant'\n  clusterLocatorMethods:\n    - type: 'config'\n      clusters:\n        - url: kubernetes.default.svc.cluster.local:443\n          name: local\n          authProvider: 'serviceAccount'\n          skipTLSVerify: false\n          skipMetricsLookup: true\n",
+      "required": [],
+      "title": "appConfig",
+      "type": "string"
+    },
+    "backstage": {
+      "additionalProperties": false,
+      "properties": {
+        "baseURL": {
+          "default": "http://localhost",
+          "required": [],
+          "title": "baseURL",
+          "type": "string"
+        }
+      },
+      "required": [
+        "baseURL"
+      ],
+      "title": "backstage",
+      "type": "object"
+    },
+    "catalog": {
+      "additionalProperties": false,
+      "properties": {
+        "customCatalogLocation": {
+          "default": "None",
+          "required": [],
+          "title": "customCatalogLocation",
+          "type": "string"
+        },
+        "demoCatalogLocation": {
+          "default": "https://github.com/PlatformersCommunity/backstage-helm-chart/blob/main/demo-catalog/all.yaml",
+          "required": [],
+          "title": "demoCatalogLocation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "demoCatalogLocation",
+        "customCatalogLocation"
+      ],
+      "title": "catalog",
+      "type": "object"
+    },
+    "clusterRoleBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "default": true,
+          "description": "Specifies whether a cluster role binding should be created",
+          "required": [],
+          "title": "create",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "title": "clusterRoleBinding",
+      "type": "object"
+    },
+    "fullnameOverride": {
+      "default": "",
+      "required": [],
+      "title": "fullnameOverride",
+      "type": "string"
+    },
+    "github": {
+      "additionalProperties": false,
+      "properties": {
+        "accessToken": {
+          "default": "",
+          "required": [],
+          "title": "accessToken",
+          "type": "string"
+        }
+      },
+      "required": [
+        "accessToken"
+      ],
+      "title": "github",
+      "type": "object"
+    },
+    "global": {
+      "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
+      "required": [],
+      "title": "global",
+      "type": "object"
+    },
+    "image": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "default": "backstage-platformers",
+          "required": [],
+          "title": "name",
+          "type": "string"
+        },
+        "pullPolicy": {
+          "default": "IfNotPresent",
+          "required": [],
+          "title": "pullPolicy",
+          "type": "string"
+        },
+        "repository": {
+          "default": "ghcr.io/guymenahem/",
+          "required": [],
+          "title": "repository",
+          "type": "string"
+        },
+        "tag": {
+          "default": "0.0.1",
+          "required": [],
+          "title": "tag",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repository",
+        "name",
+        "tag",
+        "pullPolicy"
+      ],
+      "title": "image",
+      "type": "object"
+    },
+    "imagePullSecrets": {
+      "items": {
+        "required": []
+      },
+      "required": [],
+      "title": "imagePullSecrets",
+      "type": "array"
+    },
+    "nameOverride": {
+      "default": "",
+      "required": [],
+      "title": "nameOverride",
+      "type": "string"
+    },
+    "nodeSelector": {
+      "additionalProperties": false,
+      "required": [],
+      "title": "nodeSelector",
+      "type": "object"
+    },
+    "podAnnotations": {
+      "additionalProperties": false,
+      "required": [],
+      "title": "podAnnotations",
+      "type": "object"
+    },
+    "postgres": {
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "default": "backstage-rw",
+          "required": [],
+          "title": "host",
+          "type": "string"
+        },
+        "password": {
+          "default": "password",
+          "required": [],
+          "title": "password",
+          "type": "string"
+        },
+        "port": {
+          "default": "5432",
+          "required": [],
+          "title": "port",
+          "type": "string"
+        },
+        "user": {
+          "default": "app",
+          "required": [],
+          "title": "user",
+          "type": "string"
+        }
+      },
+      "required": [
+        "port",
+        "host",
+        "user",
+        "password"
+      ],
+      "title": "postgres",
+      "type": "object"
+    },
+    "replicaCount": {
+      "default": 1,
+      "description": "Default values for helm-charts.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+      "required": [],
+      "title": "replicaCount",
+      "type": "integer"
+    },
+    "resources": {
+      "additionalProperties": false,
+      "properties": {
+        "limits": {
+          "additionalProperties": false,
+          "properties": {
+            "cpu": {
+              "default": "1000m",
+              "required": [],
+              "title": "cpu",
+              "type": "string"
+            },
+            "memory": {
+              "default": "512Mi",
+              "required": [],
+              "title": "memory",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "title": "limits",
+          "type": "object"
+        },
+        "requests": {
+          "additionalProperties": false,
+          "properties": {
+            "cpu": {
+              "default": "100m",
+              "required": [],
+              "title": "cpu",
+              "type": "string"
+            },
+            "memory": {
+              "default": "128Mi",
+              "required": [],
+              "title": "memory",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "title": "requests",
+          "type": "object"
+        }
+      },
+      "required": [
+        "limits",
+        "requests"
+      ],
+      "title": "resources",
+      "type": "object"
+    },
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "default": 7007,
+          "required": [],
+          "title": "port",
+          "type": "integer"
+        },
+        "type": {
+          "default": "ClusterIP",
+          "required": [],
+          "title": "type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "port"
+      ],
+      "title": "service",
+      "type": "object"
+    },
+    "serviceAccount": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": false,
+          "description": "Annotations to add to the service account",
+          "required": [],
+          "title": "annotations",
+          "type": "object"
+        },
+        "create": {
+          "default": true,
+          "description": "Specifies whether a service account should be created",
+          "required": [],
+          "title": "create",
+          "type": "boolean"
+        },
+        "name": {
+          "default": "",
+          "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template",
+          "required": [],
+          "title": "name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "create",
+        "annotations",
+        "name"
+      ],
+      "title": "serviceAccount",
+      "type": "object"
+    },
+    "tolerations": {
+      "items": {
+        "required": []
+      },
+      "required": [],
+      "title": "tolerations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "replicaCount",
+    "image",
+    "imagePullSecrets",
+    "nameOverride",
+    "fullnameOverride",
+    "serviceAccount",
+    "clusterRoleBinding",
+    "podAnnotations",
+    "service",
+    "resources",
+    "nodeSelector",
+    "tolerations",
+    "affinity",
+    "additionalConfigMapMounts",
+    "github",
+    "postgres",
+    "catalog",
+    "backstage",
+    "appConfig"
+  ],
+  "type": "object"
+}
